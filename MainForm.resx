@@ -74,6 +74,11 @@ Referred to as some by "Slow mode", this simply adds an additional delay to the 
     <value>When using colour checking (Disable colour unchecked) this will add an additional delay between clicks
 Referred to as some by "Slow mode", this simply adds an additional delay to the existing 200 ms delay</value>
   </data>
+  <data name="chkSelectServer.ToolTip" xml:space="preserve">
+    <value>Enabling this will click the server form the server list every X clicks. This refreshes the UI if it's locked up.
+
+I don't recommend having this happen too often as it could interfere with an active session join</value>
+  </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>

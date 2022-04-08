@@ -1,15 +1,18 @@
 using Gma.System.MouseKeyHook;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Octokit;
 
 namespace Sim70
 {
     public partial class MainForm : Form
     {
         private Point location;
-        private Color colour;
+        private Point serverlocation;
         private IKeyboardMouseEvents m_GlobalHook = Hook.GlobalEvents();
         private bool isRunning;
+        private bool isAdvanced;
+        private int ver = 2;
 
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -23,48 +26,14 @@ namespace Sim70
             public int Bottom { get; set; }
         }
 
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        public static extern IntPtr FindWindow(string strClassName, string strWindowName);
-
-
         [DllImport("user32.dll")]
         public static extern bool GetWindowRect(IntPtr hwnd, ref Rect rectangle);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetDC(IntPtr hwnd);
-
-        [DllImport("user32.dll")]
-        private static extern int ReleaseDC(IntPtr hwnd, IntPtr hdc);
-
-        [DllImport("gdi32.dll")]
-        private static extern uint GetPixel(IntPtr hdc, int nXPos, int nYPos);
 
         [DllImport("user32.dll")]
         private static extern bool PostMessage(IntPtr hWnd, uint Msg, int wParam, int lParam);
 
         [DllImport("user32.dll")]
-        private static extern bool SetWindowPos(
-          IntPtr hWnd,
-          int hWndInsertAfter,
-          int X,
-          int Y,
-          int cx,
-          int cy,
-          uint uFlags);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int x, int y);
-
-        [DllImport("user32.dll")]
-        public static extern void mouse_event(
-          uint dwFlags,
-          int dx,
-          int dy,
-          uint dwData,
-          UIntPtr dwExtraInfo);
 
         public MainForm()
         {
@@ -72,9 +41,36 @@ namespace Sim70
             m_GlobalHook.KeyDown += new KeyEventHandler(OnKeyDown);
         }
 
+
         private void Form1_Load(object sender, EventArgs e)
         {
             // AllocConsole();
+            
+            var client = new GitHubClient(new ProductHeaderValue("SIM70"));
+            var releases = client.Repository.Release.GetAll("lkd70", "SIM70");
+            var latest = releases.Result[0];
+
+            Console.WriteLine("The latest release is tagged at {0} and is named {1}", latest.TagName, latest.Name);
+
+            if (latest.Id < ver)
+            {
+
+                string message = $"An update is available for Sim70." +
+                 $"\nYou're currently on version {ver}, however version {latest.Id} is available." +
+                 $"\nDownload the new verison now?";
+                DialogResult result = MessageBox.Show(message, "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    OpenBrowser(latest.Assets[0].BrowserDownloadUrl);
+                    MessageBox.Show("Download has started in your browser. Please close Sim70 and re-open the new file.");
+                }
+            }
+
+            Text = $"SIM70 v{ver} - Kibble on top";
+
+            Width = 358;
+            Height = 249;
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e)
@@ -84,42 +80,6 @@ namespace Sim70
                 toggleSimming();
             }
         }
-
-
-        [DllImport("User32.dll")]
-        public static extern short GetAsyncKeyState(ushort vKey);
-
-        public static Color GetPixelColor(IntPtr hwd, int x, int y)
-        {
-            IntPtr dc = MainForm.GetDC(hwd);
-            uint pixel = MainForm.GetPixel(dc, x, y);
-            MainForm.ReleaseDC(hwd, dc);
-            return Color.FromArgb((int)pixel & (int)byte.MaxValue, ((int)pixel & 65280) >> 8, ((int)pixel & 16711680) >> 16);
-        }
-
-        private bool searchPixel(Color color, int tolerance)
-        {
-            Process[] processesByName = Process.GetProcessesByName("Shootergame");
-            if (processesByName.Length == 0)
-                return false;
-            IntPtr mainWindowHandle = processesByName[0].MainWindowHandle;
-            Point coords = getJoinCoords(mainWindowHandle);
-            bool flag = true;
-            while (flag)
-            {
-                Color pixelColor = MainForm.GetPixelColor(mainWindowHandle, coords.X, coords.Y);
-                Console.WriteLine($"Couldn't Find Color: {pixelColor.ToString()} - x:{coords.X}, y:{coords.Y}");
-                if ((Math.Abs(pixelColor.R - color.R) + Math.Abs(pixelColor.G - color.G) + Math.Abs(pixelColor.B - color.B)) < tolerance)
-                {
-                    Console.WriteLine("Found Color");
-                    flag = false;
-                }
-                Thread.Sleep(100);
-            }
-            return true;
-        }
-
-        private bool searchJoinPixel() => this.searchPixel(colour, 20);
 
         private void toggleSimming()
         {
@@ -133,7 +93,7 @@ namespace Sim70
                 {
 
                     btnStatus.Text = "Stop (F2)";
-                    new Task(new Action(this.loopClicker)).Start();
+                    new Task(new Action(loopClicker)).Start();
                 }
                 else
                 {
@@ -152,58 +112,103 @@ namespace Sim70
             return joinCoords;
         }
 
-        private async void loopClicker()
+        private void loopClicker()
         {
-            MainForm mainForm = this;
+            int loopCount = 0;
+
             Process[] processesByName = Process.GetProcessesByName("Shootergame");
             if (processesByName.Length != 0)
             {
                 IntPtr hWnd_pc = processesByName[0].MainWindowHandle;
-                while (mainForm.isRunning)
+                while (isRunning)
                 {
-                    if (!mainForm.chkDisableColours.Checked)
+                    loopCount = loopCount + 1;
+                    Point mousePosition = MousePosition;
+                    SetCursorPos(location.X, location.Y);
+                    PostMessage(hWnd_pc, 513U, 0, 0);
+                    PostMessage(hWnd_pc, 514U, 0, 0);
+                    Thread.Sleep(1);
+
+                    if (chkAdvanced.Checked && chkSelectServer.Checked && (loopCount % nudSelectServerEvery.Value) == 0 && !serverlocation.IsEmpty)
                     {
-                        Task<bool> task = new Task<bool>(new Func<bool>(mainForm.searchJoinPixel));
-                        task.Start();
-                        if (await task)
-                        {
-                            Point mousePosition = Control.MousePosition;
-                            SetCursorPos(location.X, location.Y);
-                            PostMessage(hWnd_pc, 513U, 0, 0);
-                            PostMessage(hWnd_pc, 514U, 0, 0);
-                            Thread.Sleep(2);
-                            SetCursorPos(mousePosition.X, mousePosition.Y);
-                            Thread.Sleep((int)nudDelay.Value);
-                        }
-                        Thread.Sleep(200);
-                    }
-                    else
-                    {
-                        Point mousePosition = Control.MousePosition;
-                        MainForm.SetCursorPos(location.X, location.Y);
-                        MainForm.PostMessage(hWnd_pc, 513U, 0, 0);
-                        MainForm.PostMessage(hWnd_pc, 514U, 0, 0);
+                        SetCursorPos(serverlocation.X, serverlocation.Y);
+                        PostMessage(hWnd_pc, 513U, 0, 0);
+                        PostMessage(hWnd_pc, 514U, 0, 0);
                         Thread.Sleep(2);
-                        MainForm.SetCursorPos(mousePosition.X, mousePosition.Y);
+                        SetCursorPos(mousePosition.X, mousePosition.Y);
                         Thread.Sleep((int)nudDelay.Value);
+                        Thread.Sleep((int)nudDelay.Value);
+
                     }
+                    SetCursorPos(mousePosition.X, mousePosition.Y);
+                    Thread.Sleep((int)nudDelay.Value);
+
                 }
             }
             else
             {
-                int num = (int)MessageBox.Show("ARK not Running");
+                MessageBox.Show("Please start ARK");
             }
         }
 
         private void screenColorPicker1_MouseUp(object sender, MouseEventArgs e)
         {
             location = Cursor.Position;
-            colour = screenColorPicker1.Color;
         }
 
         private void btnStatus_Click(object sender, EventArgs e)
         {
             toggleSimming();
+        }
+
+        private void chkAdvanced_CheckedChanged(object sender, EventArgs e)
+        {
+            isAdvanced = !isAdvanced;
+
+            if (isAdvanced)
+            {
+                Width = 358;
+                Height = 421;
+            } else
+            {
+                Width = 358;
+                Height = 249;
+            }
+        }
+
+        public static void OpenBrowser(string url)
+        {
+            try
+            {
+                Process.Start(url);
+            }
+            catch
+            {
+                url = url.Replace("&", "^&");
+                Process.Start(new ProcessStartInfo("cmd", $"/c start {url}") { CreateNoWindow = true });
+            }
+        }
+
+        private void scpServerSelect_MouseUp(object sender, MouseEventArgs e)
+        {
+            serverlocation = Cursor.Position;
+        }
+
+        private void chkSelectServer_CheckStateChanged(object sender, EventArgs e)
+        {
+            nudSelectServerEvery.Visible = chkSelectServer.Checked;
+            scpServerSelect.Visible = chkSelectServer.Checked;
+            lblServerSelectMode.Visible = chkSelectServer.Checked;
+        }
+
+        private void btnGithub_Click(object sender, EventArgs e)
+        {
+            OpenBrowser("https://github.com/lkd70/SIM70/releases");
+        }
+
+        private void btnDonate_Click(object sender, EventArgs e)
+        {
+            OpenBrowser("https://github.com/sponsors/lkd70");
         }
     }
 }

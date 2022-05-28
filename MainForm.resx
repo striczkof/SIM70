@@ -60,19 +60,19 @@
   <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
-  <data name="screenColorPicker1.ToolTip" xml:space="preserve">
+  <data name="pickerJoin.ToolTip" xml:space="preserve">
     <value>Click and drag inside of this box and move your mouse over to the "Join" button on your Ark screen.
 Ensure the Ark screen is visible.
 Ensure the Join button is **NOT** clicked (still light blue, not dark blue)
 Once your cursor is in the right place, simply release your click.</value>
   </data>
   <data name="nudDelay.ToolTip" xml:space="preserve">
-    <value>When using colour checking (Disable colour unchecked) this will add an additional delay between clicks
-Referred to as some by "Slow mode", this simply adds an additional delay to the existing 200 ms delay</value>
+    <value>When using Colour Check Mode and Auto Clickrate Mode this will add an additional delay on top of the auto delay
+When not using Auto Clickrate Mode, this is the minimum time overall that the program will wait between clicks</value>
   </data>
   <data name="label1.ToolTip" xml:space="preserve">
-    <value>When using colour checking (Disable colour unchecked) this will add an additional delay between clicks
-Referred to as some by "Slow mode", this simply adds an additional delay to the existing 200 ms delay</value>
+    <value>When using Colour Check Mode and Auto Clickrate Mode this will add an additional delay on top of the auto delay
+When not using Auto Clickrate Mode, this is the minimum time overall that the program will wait between clicks</value>
   </data>
   <data name="chkSelectServer.ToolTip" xml:space="preserve">
     <value>Enabling this will click the server form the server list every X clicks. This refreshes the UI if it's locked up.

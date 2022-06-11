@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Octokit;
+using System.Text;
 
 namespace Sim70
 {
@@ -9,8 +10,12 @@ namespace Sim70
         private Point joinButtonCoords;
         private Point serverCoords;
         private bool isRunning;
-        private bool isColourCheckMode;
-        private int ver = 3;
+        private readonly int ver = 4;
+        private Color joiningColor;
+        private Log log;
+        private DateTime started;
+        private int joinCounter = 0;
+        private int secondsPassed = 0;
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetDC(IntPtr hwnd);
@@ -20,10 +25,6 @@ namespace Sim70
 
         [DllImport("gdi32.dll")]
         private static extern uint GetPixel(IntPtr hdc, int nXPos, int nYPos);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool AllocConsole();
 
         [DllImport("user32.dll")]
         public static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vlc);
@@ -47,16 +48,17 @@ namespace Sim70
         [DllImport("user32.dll")]
         private static extern bool SetCursorPos(int x, int y);
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public MainForm()
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         {
             InitializeComponent();
             RegisterHotKey(Handle, 1, 0, (int)Keys.F2);
         }
 
-
         private void Form1_Load(object sender, EventArgs e)
         {
-            // AllocConsole();
+            log = new Log(rtbLog);
 
             for (int i = 1; i <= 10; i++)
             {
@@ -64,15 +66,17 @@ namespace Sim70
             }
             cmbHotkey.SelectedIndex = 1;
 
+            loadSettings();
+
             var client = new GitHubClient(new ProductHeaderValue("SIM70"));
             var releases = client.Repository.Release.GetAll("lkd70", "SIM70");
             var latest = releases.Result[0];
 
-            Console.WriteLine("The latest release is tagged at {0} and is named {1}", latest.TagName, latest.Name);
+            log.Append("The latest Sim70 release on GitHub is version " + latest.Id);
 
             if (latest.Id < ver)
             {
-
+                log.Append($"New update found. Current version: {ver}. Latest GitHub release version: {latest.Id}");
                 string message = $"An update is available for Sim70." +
                  $"\nYou're currently on version {ver}, however version {latest.Id} is available." +
                  $"\nDownload the new verison now?";
@@ -102,7 +106,7 @@ namespace Sim70
             Process[] processesByName = Process.GetProcessesByName(name);
             if (processesByName.Length != 0)
             {
-                Console.WriteLine("process lookup: " + processesByName.Length + ", Handle: " + processesByName[0].MainWindowHandle);
+                log.Append("process lookup: " + processesByName.Length + ", Handle: " + processesByName[0].MainWindowHandle, Log.Type.Work);
                 return processesByName[0].MainWindowHandle;
             } else
             {
@@ -110,16 +114,38 @@ namespace Sim70
             }
         }
 
+        private void SetText(string text, Control control)
+        {
+            if (control.InvokeRequired)
+                control.Invoke(new Action(() => control.Text = text));
+            else
+                control.Text = text;
+        }
+
+        private void updateStats()
+        {
+            SetText("First Started Simming: " + started.ToString("yyyy-MM-dd HH:mm:ss"), lblFirstStartedSimming);
+            SetText("Total Simming Duration: " + TimeSpan.FromSeconds(secondsPassed).ToString(@"hh\:mm\:ss"), lblTotalSimmingDuration);
+            SetText("Total join clicks: " + joinCounter.ToString("#,##0"), lblJoinClicks);
+        }
+        private void toggleStatus(bool running)
+        {
+            lblStatus.Text = running ? "Running" : "Stopped";
+            lblStatus.ForeColor = running ? Color.Green : Color.Red;
+        }
         private void toggleSimming()
         {
             isRunning = !isRunning;
+            toggleStatus(isRunning);
             if (joinButtonCoords.IsEmpty)
             {
+                toggleStatus(false);
                 MessageBox.Show("Please drag the box in the UI to the Join button on the ARK Screen.");
             } else
             {
                 if (isRunning)
                 {
+                    started = DateTime.Now;
                     btnStatus.Text = "Stop (F2)";
                     new Task(new Action(loopClicker)).Start();
                 }
@@ -131,33 +157,111 @@ namespace Sim70
 
         }
 
+        void sendDiscord()
+        {
+            string user = (txtMentionId.Text != "") ? $"<@{txtMentionId.Text}> - " : "";
+            string message = @"{
+              ""content"": null,
+              ""embeds"": [
+                {
+                  ""title"": ""You're in!"",
+                  ""description"": """ + user + @"Rumour has it you've got in to the server. I can't confirm this so please check."",
+                  ""fields"": [
+                    {
+                      ""name"": ""Started Simming"",
+                      ""value"": """ + started.ToString("yyyy-MM-dd HH:mm:ss") + @""",
+                      ""inline"": true
+                    },
+                    {
+                      ""name"": ""Total Sim Duration"",
+                      ""value"": """ + TimeSpan.FromSeconds(secondsPassed).ToString(@"hh\:mm\:ss") + @""",
+                      ""inline"": true
+                    },
+                    {
+                      ""name"": ""Join Clicks"",
+                      ""value"": """ + joinCounter.ToString("#,##0") + @""",
+                      ""inline"": true
+                    }
+                  ],
+                  ""author"": {
+                    ""name"": ""Sim70"",
+                    ""url"": ""https://github.com/lkd70/SIM70""
+                  }
+                }
+              ]
+            }";
+
+
+
+            if (txtDiscordWebhook.Text != null)
+            {
+                HttpClient client = new HttpClient();
+                var content = new StringContent(message, Encoding.UTF8, "application/json");
+                var result = client.PostAsync(txtDiscordWebhook.Text, content).Result;
+
+                //String mentionID = (txtMentionId.Text != null) ? $"<@{txtMentionId.Text}> - " : "";
+                //embed.Description = mentionID + "Rumour has it you've got in to the server. I can't confirm this so please check.";
+
+            }
+        }
+
         int WaitForJoinable(IntPtr process)
         {
             int seconds = 0;
             while (true)
             {
+                if (!isRunning) return 0;
                 seconds++;
+                secondsPassed++;
+                updateStats();
+
                 Thread.Sleep(1000);
                 if (process != IntPtr.Zero)
                 {
-                    Console.WriteLine("Waiting for JOIN button, seconds: " + seconds);
                     Point coords = getAdjustedCoords(process, joinButtonCoords);
                     Color current = GetPixelColor(process, coords.X, coords.Y);
-                    Console.WriteLine($"{pickerJoin.Color.R}, {pickerJoin.Color.G}, {pickerJoin.Color.B}");
 
-                    Console.WriteLine($"{current.R}, {current.G}, {current.B}");
-
-                    var redRange = Enumerable.Range(pickerJoin.Color.R - 5, pickerJoin.Color.R + 5);
-                    var greenRange = Enumerable.Range(pickerJoin.Color.G - 5, pickerJoin.Color.G + 5);
-                    var blueRange = Enumerable.Range(pickerJoin.Color.B - 5, pickerJoin.Color.B + 5);
+                    IEnumerable<int> redRange   = Enumerable.Range(pickerJoin.Color.R - 5, pickerJoin.Color.R + 5);
+                    IEnumerable<int> greenRange = Enumerable.Range(pickerJoin.Color.G - 5, pickerJoin.Color.G + 5);
+                    IEnumerable<int> blueRange  = Enumerable.Range(pickerJoin.Color.B - 5, pickerJoin.Color.B + 5);
 
                     if (redRange.Contains(current.R) && greenRange.Contains(current.G) && blueRange.Contains(current.B))
                     {
-                        Console.WriteLine("Join detected - ");
+                        log.Append("Join button detected", Log.Type.Work);
                         return seconds;
                     } else if (seconds >= 30)
                     {
                         return 30;
+                    } else
+                    {
+                        // Join button still pressed.
+                        log.Append("Waiting for JOIN button, seconds: " + seconds, Log.Type.Work);
+                        if (joiningColor == Color.Empty)
+                        {
+                            log.Append("Writing joiningColor. Value: " + current.ToString(), Log.Type.Work);
+                            joiningColor = current;
+                        } else
+                        {
+                            // Check if we're potentially in the server.
+                            redRange = Enumerable.Range(joiningColor.R - 10, joiningColor.R + 10);
+                            greenRange = Enumerable.Range(joiningColor.G - 10, joiningColor.G + 10);
+                            blueRange = Enumerable.Range(joiningColor.B - 10, joiningColor.B + 10);
+                            if (redRange.Contains(current.R) && greenRange.Contains(current.G) && blueRange.Contains(current.B))
+                            {
+                                // Join button is pressed - Not an unknown colour.
+                                log.Append("In check: No", Log.Type.Work);
+                            } else
+                            {
+                                // Join button (clicked or unclicked) was not found, potentially in server?
+                                log.Append("In check: Maybe?", Log.Type.Work);
+                                if (chkAutoStopSim.Checked)
+                                {
+                                    if (chkDiscord.Checked) sendDiscord();
+                                    log.Append("Assuming we got in to the server. Disabling sim.", Log.Type.Done);
+                                    toggleSimming();
+                                }
+                            }
+                        }
                     }
                 } else
                 {
@@ -182,6 +286,8 @@ namespace Sim70
                     SetCursorPos(joinButtonCoords.X, joinButtonCoords.Y);
                     PostMessage(hWnd_pc, 513U, 0, 0);
                     PostMessage(hWnd_pc, 514U, 0, 0);
+                    log.Append("Clicked join");
+                    joinCounter++;
                     Thread.Sleep(1);
 
 
@@ -191,12 +297,12 @@ namespace Sim70
                     if (chkAutoDelay.Checked)
                     {
                         taken = WaitForJoinable(hWnd_pc);
-                        Console.WriteLine("Waited: " + taken);
+                        log.Append("Waited " + taken + " seconds for the join button", Log.Type.Work);
                     }
 
                     if (chkSelectServer.Checked && (taken >=30) && !serverCoords.IsEmpty)
                     {
-                        Console.WriteLine("Selecting server from list as 30 seconds have passed since last join button was visible.");
+                        log.Append("Selecting server from list as 30 seconds have passed since last join button was visible.", Log.Type.Warning);
                         SetCursorPos(serverCoords.X, serverCoords.Y);
                         PostMessage(hWnd_pc, 513U, 0, 0);
                         PostMessage(hWnd_pc, 514U, 0, 0);
@@ -207,12 +313,11 @@ namespace Sim70
 
                     }
 
-
                     Thread.Sleep((int)nudDelay.Value);
                 }
             } else
             {
-                MessageBox.Show("Please ensure ARK is running, couldn't locate the process");
+                log.Append("Please ensure ARK is running, couldn't locate the process", Log.Type.Error);
             }
         }
 
@@ -224,18 +329,6 @@ namespace Sim70
         private void btnStatus_Click(object sender, EventArgs e)
         {
             toggleSimming();
-        }
-
-        private void chkColourCheckMode_CheckedChanged(object sender, EventArgs e)
-        {
-            chkAutoDelay.Enabled = chkColourCheckMode.Checked;
-            chkSelectServer.Enabled = chkColourCheckMode.Checked;
-            if (!chkColourCheckMode.Checked)
-            {
-                chkAutoDelay.Checked = false;
-            }
-
-            isColourCheckMode = !isColourCheckMode;
         }
 
         public static void OpenBrowser(string url)
@@ -259,11 +352,6 @@ namespace Sim70
         private void chkSelectServer_CheckStateChanged(object sender, EventArgs e)
         {
             scpServerSelect.Visible = chkSelectServer.Checked;
-        }
-
-        private void btnGithub_Click(object sender, EventArgs e)
-        {
-            OpenBrowser("https://github.com/lkd70/SIM70/releases");
         }
 
         private void btnDonate_Click(object sender, EventArgs e)
@@ -311,13 +399,70 @@ namespace Sim70
             return Keys.F2;
         }
 
-        private void cmbHotkey_SelectedIndexChanged(object sender, EventArgs e)
+        private void cmbHotkey_SelectedIndexChanged(object? sender, EventArgs? e)
         {
             Keys hotkey = resolveHotkey();
             btnStatus.Text = (isRunning ? "Stop" : "Start") + " (" + hotkey.ToString() + ")";
-            // RegisterHotKey(Handle, 1, 0, (int)Keys.F2);
             UnregisterHotKey(Handle, 1);
             RegisterHotKey(Handle, 1, 0, (int)hotkey);
+            Properties.Settings.Default.Hotkey = hotkey.ToString();
+            Properties.Settings.Default.Save();
+        }
+
+        private void chkDiscord_CheckedChanged(object? sender, EventArgs? e)
+        {
+            txtDiscordWebhook.Enabled = chkDiscord.Checked;
+            txtMentionId.Enabled = chkDiscord.Checked;
+            Properties.Settings.Default.DiscordAlerts = chkDiscord.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void loadSettings()
+        {
+            chkAutoDelay.Checked = Properties.Settings.Default.AutoClickrateMode;
+            nudDelay.Value = Properties.Settings.Default.ClickRate;
+            chkAutoStopSim.Checked = Properties.Settings.Default.AutoStopSim;
+
+            chkDiscord.Checked = Properties.Settings.Default.DiscordAlerts;
+            chkDiscord_CheckedChanged(null, null);
+
+            txtDiscordWebhook.Text = Properties.Settings.Default.DiscordWebhook;
+            txtMentionId.Text = Properties.Settings.Default.DiscordMention;
+
+            cmbHotkey.SelectedItem = Properties.Settings.Default.Hotkey;
+            cmbHotkey_SelectedIndexChanged(null, null);
+
+
+
+        }
+        private void chkAutoStopSim_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.AutoStopSim = chkAutoStopSim.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void txtDiscordWebhook_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.DiscordWebhook = txtDiscordWebhook.Text;
+            Properties.Settings.Default.Save();
+        }
+
+        private void txtMentionId_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.DiscordMention = txtMentionId.Text;
+            Properties.Settings.Default.Save();
+        }
+
+        private void nudDelay_ValueChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.ClickRate = (int)nudDelay.Value;
+            Properties.Settings.Default.Save();
+        }
+
+        private void chkAutoDelay_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.AutoClickrateMode = chkAutoDelay.Checked;
+            Properties.Settings.Default.Save();
         }
     }
 }

@@ -22,5 +22,89 @@ namespace Sim70.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AutoStopSim {
+            get {
+                return ((bool)(this["AutoStopSim"]));
+            }
+            set {
+                this["AutoStopSim"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool DiscordAlerts {
+            get {
+                return ((bool)(this["DiscordAlerts"]));
+            }
+            set {
+                this["DiscordAlerts"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DiscordWebhook {
+            get {
+                return ((string)(this["DiscordWebhook"]));
+            }
+            set {
+                this["DiscordWebhook"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DiscordMention {
+            get {
+                return ((string)(this["DiscordMention"]));
+            }
+            set {
+                this["DiscordMention"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("F2")]
+        public string Hotkey {
+            get {
+                return ((string)(this["Hotkey"]));
+            }
+            set {
+                this["Hotkey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AutoClickrateMode {
+            get {
+                return ((bool)(this["AutoClickrateMode"]));
+            }
+            set {
+                this["AutoClickrateMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1000")]
+        public int ClickRate {
+            get {
+                return ((int)(this["ClickRate"]));
+            }
+            set {
+                this["ClickRate"] = value;
+            }
+        }
     }
 }

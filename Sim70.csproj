@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <PackageReference Include="Cyotek.Windows.Forms.ColorPicker" Version="1.7.2" />
+    <PackageReference Include="DiscordWebHook.Library" Version="1.0.0" />
     <PackageReference Include="Octokit" Version="0.51.0" />
   </ItemGroup>
 

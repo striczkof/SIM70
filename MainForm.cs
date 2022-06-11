@@ -72,9 +72,11 @@ namespace Sim70
             var releases = client.Repository.Release.GetAll("lkd70", "SIM70");
             var latest = releases.Result[0];
 
-            log.Append("The latest Sim70 release on GitHub is version " + latest.Id);
+            log.Append("The latest Sim70 release on GitHub is version " + latest.Name);
 
-            if (latest.Id < ver)
+            int latestVer = Int32.Parse(latest.Name.Split("V")[1]);
+
+            if (latestVer > ver)
             {
                 log.Append($"New update found. Current version: {ver}. Latest GitHub release version: {latest.Id}");
                 string message = $"An update is available for Sim70." +
@@ -87,7 +89,13 @@ namespace Sim70
                     OpenBrowser(latest.Assets[0].BrowserDownloadUrl);
                     MessageBox.Show("Download has started in your browser. Please close Sim70 and re-open the new file.");
                 }
-            }
+            } else if (latestVer == ver)
+            {
+                log.Append("We're on the latest release.");
+            } else if (ver > latestVer)
+            {
+                log.Append("Unreleased build detected");
+            } 
 
             Text = $"SIM70 v{ver} - Kibble on top";
         }

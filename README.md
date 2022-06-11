@@ -4,8 +4,7 @@ A universal "background" join sim application for ARK: Survival Evolved
 
 Inspired by "TurtleSim" but free, open source, and safe.
 
-
-[![SIM70 Preview]([https://img.lkd70.com/9khJIYb/direct](https://img.lkd70.com/HUGI5/poBuTeZI98.png))]([https://youtu.be/g4-qIQRYnJc](https://www.youtube.com/watch?v=tYk_EsvsadE) "Sim70 Preview")
+[![SIM70 Preview Video](https://img.lkd70.com/HUGI5/poBuTeZI98.png/raw)](https://www.youtube.com/watch?v=tYk_EsvsadE)
 
 [DOWNLOAD](https://github.com/lkd70/SIM70/releases/latest)
 

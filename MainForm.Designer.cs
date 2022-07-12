@@ -470,7 +470,6 @@
         private CheckBox chkAutoDelay;
         private ComboBox cmbHotkey;
         private Label label2;
-        private CheckBox checkBox1;
         private TabControl tabControl1;
         private TabPage tabPage1;
         private TabPage tabPage2;

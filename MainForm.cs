@@ -58,7 +58,7 @@ namespace Sim70
             RegisterHotKey(Handle, 1, 0, (int)Keys.F2);
         }
 
-        private async void Form1_Load(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
             strings.Add("Kibble on top!");
             strings.Add("TPG > rest of ark");
@@ -81,29 +81,34 @@ namespace Sim70
             if (release != null)
             {
                 log.Append("The latest Sim70 release on GitHub is version " + release.Name);
-                int latestVer = Int32.Parse(release.Name.Split("V")[1]);
-
-                if (latestVer > ver)
+                if (release.Name != null)
                 {
-                    log.Append($"New update found. Current version: {ver}. Latest GitHub release version: {release.Id}");
-                    string message = $"An update is available for Sim70." +
-                     $"\nYou're currently on version {ver}, however version {release.Id} is available." +
-                     $"\nDownload the new verison now?";
-                    DialogResult result = MessageBox.Show(message, "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                    if (result == DialogResult.Yes)
+                    int latestVer = 0;
+                    if (Int32.TryParse(release.Name.Split("V")[1], out latestVer))
                     {
-                        OpenBrowser(release.Assets[0].BrowserDownloadUrl.ToString());
-                        MessageBox.Show("Download has started in your browser. Please close Sim70 and re-open the new file.");
+                        if (latestVer > ver)
+                        {
+                            log.Append($"New update found. Current version: {ver}. Latest GitHub release version: {release.Id}");
+                            string message = $"An update is available for Sim70." +
+                             $"\nYou're currently on version {ver}, however version {release.Id} is available." +
+                             $"\nDownload the new verison now?";
+                            DialogResult result = MessageBox.Show(message, "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                            if (result == DialogResult.Yes)
+                            {
+                                OpenBrowser("https://github.com/lkd70/SIM70/releases/latest");
+                                MessageBox.Show("Download has started in your browser. Please close Sim70 and re-open the new file.");
+                            }
+                        }
+                        else if (latestVer == ver)
+                        {
+                            log.Append("We're on the latest release.");
+                        }
+                        else if (ver > latestVer)
+                        {
+                            log.Append("Unreleased build detected");
+                        }
                     }
-                }
-                else if (latestVer == ver)
-                {
-                    log.Append("We're on the latest release.");
-                }
-                else if (ver > latestVer)
-                {
-                    log.Append("Unreleased build detected");
                 }
             }
 

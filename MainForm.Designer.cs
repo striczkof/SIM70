@@ -354,7 +354,6 @@
             // rtbLog
             // 
             this.rtbLog.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.rtbLog.Cursor = System.Windows.Forms.Cursors.Arrow;
             this.rtbLog.Location = new System.Drawing.Point(5, 3);
             this.rtbLog.Name = "rtbLog";
             this.rtbLog.ReadOnly = true;

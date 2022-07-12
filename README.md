@@ -5,11 +5,25 @@ A universal "background" join sim application for ARK: Survival Evolved
 Inspired by "TurtleSim" but free, open source, and safe.
 
 
-[![SIM70 Preview Video](https://img.lkd70.com/HUGI5/FoJodewa27.png/raw)](https://www.youtube.com/watch?v=tYk_EsvsadE)
+[![SIM70 Preview Video](https://img.lkd70.com/HUGI5/FoJodewa27.png/raw)](https://youtu.be/T0i5UNXHrYs)
 
 [DOWNLOAD](https://github.com/lkd70/SIM70/releases/latest)
 
+
+The [.NET Framework](https://dotnet.microsoft.com/en-us/download/dotnet-framework) is required to run!
+
 ## Changelog
+
+### v5.0.0.0
+
+* Fixed some issues with colour detection 
+* Added more logging to help future issue resolution
+* Discord mentions are now outside of embeds
+* More accurate time passed calculations
+* Titlebar message changes
+* Removed bundled .NET framework
+* Removed precompiled assets
+* Removed Github Octokit - Replaced with native solution
 
 ### V4.0.0.1
 

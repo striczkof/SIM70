@@ -12,8 +12,8 @@
     <PackageProjectUrl>https://github.com/lkd70/SIM70</PackageProjectUrl>
     <RepositoryUrl>https://github.com/lkd70/SIM70</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <AssemblyVersion>1.0.0.3</AssemblyVersion>
-    <FileVersion>1.0.0.3</FileVersion>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
+    <FileVersion>5.0.0.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -31,7 +31,6 @@
   <ItemGroup>
     <PackageReference Include="Cyotek.Windows.Forms.ColorPicker" Version="1.7.2" />
     <PackageReference Include="DiscordWebHook.Library" Version="1.0.0" />
-    <PackageReference Include="Octokit" Version="0.51.0" />
   </ItemGroup>
 
   <ItemGroup>

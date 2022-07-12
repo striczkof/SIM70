@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Octokit;
 using System.Text;
 
 namespace Sim70
@@ -10,12 +9,15 @@ namespace Sim70
         private Point joinButtonCoords;
         private Point serverCoords;
         private bool isRunning;
-        private readonly int ver = 4;
+        private readonly int ver = 5;
         private Color joiningColor;
         private Log log;
-        private DateTime started;
+        private DateTime started = DateTime.MinValue; // Track when the user FIRST started simming
         private int joinCounter = 0;
         private int secondsPassed = 0;
+        private DateTime recentStarted = DateTime.MinValue; // Track the most recent the user started simming
+
+        List<string> strings = new List<string>();
 
         [DllImport("user32.dll")]
         private static extern IntPtr GetDC(IntPtr hwnd);
@@ -56,8 +58,15 @@ namespace Sim70
             RegisterHotKey(Handle, 1, 0, (int)Keys.F2);
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
+            strings.Add("Kibble on top!");
+            strings.Add("TPG > rest of ark");
+            strings.Add("~insert cringe message here~");
+            strings.Add("Imagine playing ark in current year");
+            strings.Add("Being on server is overrated anyways...");
+            strings.Add((DateTime.Now.Year - 2017) + " years wasted on Ark...");
+
             log = new Log(rtbLog);
 
             for (int i = 1; i <= 10; i++)
@@ -68,36 +77,37 @@ namespace Sim70
 
             loadSettings();
 
-            var client = new GitHubClient(new ProductHeaderValue("SIM70"));
-            var releases = client.Repository.Release.GetAll("lkd70", "SIM70");
-            var latest = releases.Result[0];
-
-            log.Append("The latest Sim70 release on GitHub is version " + latest.Name);
-
-            int latestVer = Int32.Parse(latest.Name.Split("V")[1]);
-
-            if (latestVer > ver)
+            GithubRelease? release = new Github().GetCurrentVersion();
+            if (release != null)
             {
-                log.Append($"New update found. Current version: {ver}. Latest GitHub release version: {latest.Id}");
-                string message = $"An update is available for Sim70." +
-                 $"\nYou're currently on version {ver}, however version {latest.Id} is available." +
-                 $"\nDownload the new verison now?";
-                DialogResult result = MessageBox.Show(message, "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                log.Append("The latest Sim70 release on GitHub is version " + release.Name);
+                int latestVer = Int32.Parse(release.Name.Split("V")[1]);
 
-                if (result == DialogResult.Yes)
+                if (latestVer > ver)
                 {
-                    OpenBrowser(latest.Assets[0].BrowserDownloadUrl);
-                    MessageBox.Show("Download has started in your browser. Please close Sim70 and re-open the new file.");
-                }
-            } else if (latestVer == ver)
-            {
-                log.Append("We're on the latest release.");
-            } else if (ver > latestVer)
-            {
-                log.Append("Unreleased build detected");
-            } 
+                    log.Append($"New update found. Current version: {ver}. Latest GitHub release version: {release.Id}");
+                    string message = $"An update is available for Sim70." +
+                     $"\nYou're currently on version {ver}, however version {release.Id} is available." +
+                     $"\nDownload the new verison now?";
+                    DialogResult result = MessageBox.Show(message, "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            Text = $"SIM70 v{ver} - Kibble on top";
+                    if (result == DialogResult.Yes)
+                    {
+                        OpenBrowser(release.Assets[0].BrowserDownloadUrl.ToString());
+                        MessageBox.Show("Download has started in your browser. Please close Sim70 and re-open the new file.");
+                    }
+                }
+                else if (latestVer == ver)
+                {
+                    log.Append("We're on the latest release.");
+                }
+                else if (ver > latestVer)
+                {
+                    log.Append("Unreleased build detected");
+                }
+            }
+
+            Text = $"SIM70 v{ver} - " + strings[new Random().Next(strings.Count)];
         }
 
         protected override void WndProc(ref Message m)
@@ -107,6 +117,11 @@ namespace Sim70
                 toggleSimming();
             }
             base.WndProc(ref m);
+
+            if (m.Msg == 0x00A3) // Double click on titlebar
+            {
+                Text = $"SIM70 v{ver} - " + strings[new Random().Next(strings.Count)];
+            }
         }
 
         IntPtr GetProcess(string name = "Shootergame")
@@ -133,7 +148,9 @@ namespace Sim70
         private void updateStats()
         {
             SetText("First Started Simming: " + started.ToString("yyyy-MM-dd HH:mm:ss"), lblFirstStartedSimming);
-            SetText("Total Simming Duration: " + TimeSpan.FromSeconds(secondsPassed).ToString(@"hh\:mm\:ss"), lblTotalSimmingDuration);
+
+            TimeSpan sessionSpan = DateTime.Now - recentStarted;
+            SetText("Total Simming Duration: " + TimeSpan.FromSeconds(secondsPassed + sessionSpan.Seconds).ToString(@"hh\:mm\:ss"), lblTotalSimmingDuration);
             SetText("Total join clicks: " + joinCounter.ToString("#,##0"), lblJoinClicks);
         }
         private void toggleStatus(bool running)
@@ -144,6 +161,7 @@ namespace Sim70
         private void toggleSimming()
         {
             isRunning = !isRunning;
+            log.Append("Sim toggled, simming: " + isRunning);
             toggleStatus(isRunning);
             if (joinButtonCoords.IsEmpty)
             {
@@ -153,12 +171,19 @@ namespace Sim70
             {
                 if (isRunning)
                 {
-                    started = DateTime.Now;
+                    if (started == DateTime.MinValue)
+                    {
+                        started = DateTime.Now;
+                    }
+                    recentStarted = DateTime.Now;
                     btnStatus.Text = "Stop (F2)";
                     new Task(new Action(loopClicker)).Start();
                 }
                 else
                 {
+                    TimeSpan sessionSpan = DateTime.Now - recentStarted;
+                    secondsPassed = secondsPassed + sessionSpan.Seconds;
+
                     btnStatus.Text = "Start (F2)";
                 }
             }
@@ -168,8 +193,9 @@ namespace Sim70
         void sendDiscord()
         {
             string user = (txtMentionId.Text != "") ? $"<@{txtMentionId.Text}> - " : "";
+            string mention = (txtMentionId.Text != "ALERT") ? $"<@{txtMentionId.Text}>" : "";
             string message = @"{
-              ""content"": null,
+              ""content"": """ + mention + @""",
               ""embeds"": [
                 {
                   ""title"": ""You're in!"",
@@ -199,17 +225,12 @@ namespace Sim70
               ]
             }";
 
-
-
             if (txtDiscordWebhook.Text != null)
             {
                 HttpClient client = new HttpClient();
                 var content = new StringContent(message, Encoding.UTF8, "application/json");
                 var result = client.PostAsync(txtDiscordWebhook.Text, content).Result;
-
-                //String mentionID = (txtMentionId.Text != null) ? $"<@{txtMentionId.Text}> - " : "";
-                //embed.Description = mentionID + "Rumour has it you've got in to the server. I can't confirm this so please check.";
-
+                log.Append("Sent discord message, result: " + result.StatusCode.ToString());
             }
         }
 
@@ -220,7 +241,6 @@ namespace Sim70
             {
                 if (!isRunning) return 0;
                 seconds++;
-                secondsPassed++;
                 updateStats();
 
                 Thread.Sleep(1000);
@@ -232,10 +252,13 @@ namespace Sim70
                     IEnumerable<int> redRange   = Enumerable.Range(pickerJoin.Color.R - 5, pickerJoin.Color.R + 5);
                     IEnumerable<int> greenRange = Enumerable.Range(pickerJoin.Color.G - 5, pickerJoin.Color.G + 5);
                     IEnumerable<int> blueRange  = Enumerable.Range(pickerJoin.Color.B - 5, pickerJoin.Color.B + 5);
+                    log.Append("Join button colour: " + pickerJoin.Color.ToArgb() + ". Current colour: " + current.ToArgb() + ". Variable range is set to 10");
 
                     if (redRange.Contains(current.R) && greenRange.Contains(current.G) && blueRange.Contains(current.B))
                     {
                         log.Append("Join button detected", Log.Type.Work);
+                        log.Append("Join button colour: " + pickerJoin.Color.ToArgb() + ". Current colour: " + current.ToArgb() + ". Variable range is set to 10");
+
                         return seconds;
                     } else if (seconds >= 30)
                     {
@@ -472,5 +495,6 @@ namespace Sim70
             Properties.Settings.Default.AutoClickrateMode = chkAutoDelay.Checked;
             Properties.Settings.Default.Save();
         }
+
     }
 }

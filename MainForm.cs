@@ -65,6 +65,7 @@ namespace Sim70
             strings.Add("~insert cringe message here~");
             strings.Add("Imagine playing ark in current year");
             strings.Add("Being on server is overrated anyways...");
+            strings.Add("https://youtu.be/dQw4w9WgXcQ");
             strings.Add((DateTime.Now.Year - 2017) + " years wasted on Ark...");
 
             log = new Log(rtbLog);
@@ -155,8 +156,11 @@ namespace Sim70
             SetText("First Started Simming: " + started.ToString("yyyy-MM-dd HH:mm:ss"), lblFirstStartedSimming);
 
             TimeSpan sessionSpan = DateTime.Now - recentStarted;
-            SetText("Total Simming Duration: " + TimeSpan.FromSeconds(secondsPassed + sessionSpan.Seconds).ToString(@"hh\:mm\:ss"), lblTotalSimmingDuration);
+            SetText("Total Simming Duration: " + sessionSpan.ToString().Split(".")[0], lblTotalSimmingDuration);
             SetText("Total join clicks: " + joinCounter.ToString("#,##0"), lblJoinClicks);
+
+            double clicksPerSecond = Math.Round(sessionSpan.TotalSeconds / joinCounter, 2);
+            SetText("Click Rate: " + clicksPerSecond + " sec per click", lblClickRate);
         }
         private void toggleStatus(bool running)
         {
@@ -199,6 +203,7 @@ namespace Sim70
         {
             string user = (txtMentionId.Text != "") ? $"<@{txtMentionId.Text}> - " : "";
             string mention = (txtMentionId.Text != "ALERT") ? $"<@{txtMentionId.Text}>" : "";
+            TimeSpan sessionSpan = DateTime.Now - recentStarted;
             string message = @"{
               ""content"": """ + mention + @""",
               ""embeds"": [
@@ -213,7 +218,7 @@ namespace Sim70
                     },
                     {
                       ""name"": ""Total Sim Duration"",
-                      ""value"": """ + TimeSpan.FromSeconds(secondsPassed).ToString(@"hh\:mm\:ss") + @""",
+                      ""value"": """ + sessionSpan.ToString().Split(".")[0] + @""",
                       ""inline"": true
                     },
                     {
@@ -501,5 +506,11 @@ namespace Sim70
             Properties.Settings.Default.Save();
         }
 
+        private void btnCopy_Click(object sender, EventArgs e)
+        {
+            rtbLog.SelectAll();
+            rtbLog.Copy();
+            rtbLog.DeselectAll();
+        }
     }
 }

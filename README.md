@@ -10,9 +10,16 @@ Inspired by "TurtleSim" but free, open source, and safe.
 [DOWNLOAD](https://github.com/lkd70/SIM70/releases/latest)
 
 
-The [.NET Framework](https://dotnet.microsoft.com/en-us/download/dotnet-framework) is required to run!
+The [.NET Framework](https://dotnet.microsoft.com/en-us/download/dotnet-framework) is required to run the minimal build.
 
 ## Changelog
+
+
+### v5.0.0.1
+
+* Fixed timespan calculation issue in stars
+* Added click rate stat
+* Added copy button for copying logs
 
 ### v5.0.0.0
 

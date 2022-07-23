@@ -40,9 +40,11 @@
             this.chkAutoStopSim = new System.Windows.Forms.CheckBox();
             this.chkSelectServer = new System.Windows.Forms.CheckBox();
             this.scpServerSelect = new Cyotek.Windows.Forms.ScreenColorPicker();
+            this.lblClickRate = new System.Windows.Forms.Label();
+            this.btnCopy = new System.Windows.Forms.Button();
             this.cmbHotkey = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
-            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tabControl = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
@@ -61,7 +63,7 @@
             this.lblFirstStartedSimming = new System.Windows.Forms.Label();
             this.lblStatus = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nudDelay)).BeginInit();
-            this.tabControl1.SuspendLayout();
+            this.tabControl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.groupBox4.SuspendLayout();
@@ -199,6 +201,32 @@
             this.scpServerSelect.Visible = false;
             this.scpServerSelect.MouseUp += new System.Windows.Forms.MouseEventHandler(this.scpServerSelect_MouseUp);
             // 
+            // lblClickRate
+            // 
+            this.lblClickRate.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblClickRate.AutoSize = true;
+            this.lblClickRate.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.lblClickRate.Location = new System.Drawing.Point(97, 135);
+            this.lblClickRate.Name = "lblClickRate";
+            this.lblClickRate.Size = new System.Drawing.Size(85, 21);
+            this.lblClickRate.TabIndex = 3;
+            this.lblClickRate.Text = "Click Rate: ";
+            this.lblClickRate.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.toolTip1.SetToolTip(this.lblClickRate, "Average time between clicks");
+            // 
+            // btnCopy
+            // 
+            this.btnCopy.Location = new System.Drawing.Point(316, 178);
+            this.btnCopy.Name = "btnCopy";
+            this.btnCopy.Size = new System.Drawing.Size(75, 23);
+            this.btnCopy.TabIndex = 28;
+            this.btnCopy.Text = "Copy";
+            this.toolTip1.SetToolTip(this.btnCopy, "Copies the log to the clipboard");
+            this.btnCopy.UseVisualStyleBackColor = true;
+            this.btnCopy.Click += new System.EventHandler(this.btnCopy_Click);
+            // 
             // cmbHotkey
             // 
             this.cmbHotkey.FormattingEnabled = true;
@@ -217,17 +245,17 @@
             this.label2.TabIndex = 24;
             this.label2.Text = "Start/Stop Hotkey";
             // 
-            // tabControl1
+            // tabControl
             // 
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Controls.Add(this.tabPage3);
-            this.tabControl1.Controls.Add(this.tabPage4);
-            this.tabControl1.Location = new System.Drawing.Point(3, 8);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(424, 236);
-            this.tabControl1.TabIndex = 26;
+            this.tabControl.Controls.Add(this.tabPage1);
+            this.tabControl.Controls.Add(this.tabPage2);
+            this.tabControl.Controls.Add(this.tabPage3);
+            this.tabControl.Controls.Add(this.tabPage4);
+            this.tabControl.Location = new System.Drawing.Point(3, 8);
+            this.tabControl.Name = "tabControl";
+            this.tabControl.SelectedIndex = 0;
+            this.tabControl.Size = new System.Drawing.Size(424, 236);
+            this.tabControl.TabIndex = 26;
             // 
             // tabPage1
             // 
@@ -343,6 +371,7 @@
             // 
             // tabPage3
             // 
+            this.tabPage3.Controls.Add(this.btnCopy);
             this.tabPage3.Controls.Add(this.rtbLog);
             this.tabPage3.Location = new System.Drawing.Point(4, 24);
             this.tabPage3.Name = "tabPage3";
@@ -363,6 +392,7 @@
             // 
             // tabPage4
             // 
+            this.tabPage4.Controls.Add(this.lblClickRate);
             this.tabPage4.Controls.Add(this.lblJoinClicks);
             this.tabPage4.Controls.Add(this.lblTotalSimmingDuration);
             this.tabPage4.Controls.Add(this.lblFirstStartedSimming);
@@ -432,7 +462,7 @@
             this.ClientSize = new System.Drawing.Size(430, 245);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.btnDonate);
-            this.Controls.Add(this.tabControl1);
+            this.Controls.Add(this.tabControl);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(446, 284);
@@ -442,7 +472,7 @@
             this.Text = "SIM70";
             this.Load += new System.EventHandler(this.Form1_Load);
             ((System.ComponentModel.ISupportInitialize)(this.nudDelay)).EndInit();
-            this.tabControl1.ResumeLayout(false);
+            this.tabControl.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
@@ -470,7 +500,7 @@
         private CheckBox chkAutoDelay;
         private ComboBox cmbHotkey;
         private Label label2;
-        private TabControl tabControl1;
+        private TabControl tabControl;
         private TabPage tabPage1;
         private TabPage tabPage2;
         private GroupBox groupBox4;
@@ -491,5 +521,7 @@
         private Label lblJoinClicks;
         private Label lblTotalSimmingDuration;
         private Label lblFirstStartedSimming;
+        private Label lblClickRate;
+        private Button btnCopy;
     }
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace Sim70
 {
@@ -9,13 +10,14 @@ namespace Sim70
         private Point joinButtonCoords;
         private Point serverCoords;
         private bool isRunning;
-        private readonly int ver = 5;
+        private readonly int ver = 6;
         private Color joiningColor;
         private Log log;
         private DateTime started = DateTime.MinValue; // Track when the user FIRST started simming
         private int joinCounter = 0;
         private int secondsPassed = 0;
         private DateTime recentStarted = DateTime.MinValue; // Track the most recent the user started simming
+        private bool notifiedAboutMs = false;
 
         List<string> strings = new List<string>();
 
@@ -81,17 +83,17 @@ namespace Sim70
             GithubRelease? release = new Github().GetCurrentVersion();
             if (release != null)
             {
-                log.Append("The latest Sim70 release on GitHub is version " + release.Name);
-                if (release.Name != null)
+                log.Append("The latest Sim70 release on GitHub is version " + release.name);
+                if (release.tag_name != null)
                 {
                     int latestVer = 0;
-                    if (Int32.TryParse(release.Name.Split("V")[1], out latestVer))
+                    if (Int32.TryParse(release.tag_name.Split(".")[0], out latestVer))
                     {
-                        if (latestVer > ver)
+                        if (latestVer < ver)
                         {
-                            log.Append($"New update found. Current version: {ver}. Latest GitHub release version: {release.Id}");
+                            log.Append($"New major update found. Current version: {ver}. Latest GitHub release version: {release.tag_name}");
                             string message = $"An update is available for Sim70." +
-                             $"\nYou're currently on version {ver}, however version {release.Id} is available." +
+                             $"\nYou're currently on version {ver}, however version {release.tag_name} is available." +
                              $"\nDownload the new verison now?";
                             DialogResult result = MessageBox.Show(message, "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
@@ -153,14 +155,14 @@ namespace Sim70
 
         private void updateStats()
         {
-            SetText("First Started Simming: " + started.ToString("yyyy-MM-dd HH:mm:ss"), lblFirstStartedSimming);
+            SetText(started.ToString("yyyy-MM-dd HH:mm:ss"), lblFirstStartedSimming);
 
             TimeSpan sessionSpan = DateTime.Now - recentStarted;
-            SetText("Total Simming Duration: " + sessionSpan.ToString().Split(".")[0], lblTotalSimmingDuration);
-            SetText("Total join clicks: " + joinCounter.ToString("#,##0"), lblJoinClicks);
+            SetText(sessionSpan.ToString().Split(".")[0], lblTotalSimmingDuration);
+            SetText(joinCounter.ToString("#,##0"), lblJoinClicks);
 
             double clicksPerSecond = Math.Round(sessionSpan.TotalSeconds / joinCounter, 2);
-            SetText("Click Rate: " + clicksPerSecond + " sec per click", lblClickRate);
+            SetText(clicksPerSecond + " sec per click", lblClickRate);
         }
         private void toggleStatus(bool running)
         {
@@ -199,12 +201,43 @@ namespace Sim70
 
         }
 
-        void sendDiscord()
+        void sendTelegram(bool test = false)
+        {
+            string url = $"https://api.telegram.org/bot{txtBotToken.Text}/sendMessage?chat_id={txtChatId.Text}&parse_mode=MarkdownV2&text=";
+            string message = @"*SIM70*\n\nRumour has it you've got in to server. I can't confirm this so _please check_.";
+
+            if (txtBotToken.Text != null && txtBotToken.Text.Length > 0 && txtChatId.Text != null && txtChatId.Text.Length > 0)
+            {
+                if (test) log.Append("Telegram URI: " + url + (test ? "Test message" : message));
+                HttpClient client = new HttpClient();
+                var result = client.GetAsync(url + (test ? "Test message" : message)).Result;
+                log.Append("Sent telegram message, result: " + result.StatusCode.ToString());
+            }
+        }
+
+        void sendIFTTT(bool test = false)
+        {
+            TimeSpan sessionSpan = DateTime.Now - recentStarted;
+            string url = $"https://maker.ifttt.com/trigger/{txtIftttEventName.Text}/with/key/{txtIftttKey.Text}";
+            string message = @"{""started"": """ + started.ToString("yyyy-MM-dd HH:mm:ss")  + @""",
+                ""duration"": """ + sessionSpan.ToString().Split(".")[0] + @""",
+                ""clicks"": """ + joinCounter.ToString("#,##0") + @"""}";
+
+            if (txtIftttEventName.Text != null && txtIftttEventName.Text.Length > 0 && txtIftttKey.Text != null && txtIftttKey.Text.Length > 0)
+            {
+                HttpClient client = new HttpClient();
+                var content = new StringContent(test ? message : @"{""test"": true}", Encoding.UTF8, "application/json");
+                var result = client.PostAsync(url, content).Result;
+                log.Append("Sent IFTTT message, result: " + result.StatusCode.ToString());
+            }
+        }
+
+        void sendDiscord(bool test = false)
         {
             string user = (txtMentionId.Text != "") ? $"<@{txtMentionId.Text}> - " : "";
             string mention = (txtMentionId.Text != "ALERT") ? $"<@{txtMentionId.Text}>" : "";
             TimeSpan sessionSpan = DateTime.Now - recentStarted;
-            string message = @"{
+            string message = (!test) ? @"{
               ""content"": """ + mention + @""",
               ""embeds"": [
                 {
@@ -233,7 +266,7 @@ namespace Sim70
                   }
                 }
               ]
-            }";
+            }" : @"{""content"": ""Test message!""}";
 
             if (txtDiscordWebhook.Text != null)
             {
@@ -298,6 +331,17 @@ namespace Sim70
                                 if (chkAutoStopSim.Checked)
                                 {
                                     if (chkDiscord.Checked) sendDiscord();
+
+                                    if (chkIFTTT.Checked) sendIFTTT();
+                                    
+                                    if (chkDesktopNotifications.Checked)
+                                    {
+                                        new ToastContentBuilder().AddText("Rumour has it you might be in, go check!").Show();
+                                    }
+
+                                    if (chkTelegramEnabled.Checked) sendTelegram();
+
+
                                     log.Append("Assuming we got in to the server. Disabling sim.", Log.Type.Done);
                                     toggleSimming();
                                 }
@@ -395,11 +439,6 @@ namespace Sim70
             scpServerSelect.Visible = chkSelectServer.Checked;
         }
 
-        private void btnDonate_Click(object sender, EventArgs e)
-        {
-            OpenBrowser("https://github.com/sponsors/lkd70");
-        }
-
         public static Color GetPixelColor(IntPtr hwd, int x, int y)
         {
             IntPtr dc = GetDC(hwd);
@@ -452,9 +491,25 @@ namespace Sim70
 
         private void chkDiscord_CheckedChanged(object? sender, EventArgs? e)
         {
-            txtDiscordWebhook.Enabled = chkDiscord.Checked;
-            txtMentionId.Enabled = chkDiscord.Checked;
             Properties.Settings.Default.DiscordAlerts = chkDiscord.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void chkTelegramEnabled_CheckedChanged(object? sender, EventArgs? e)
+        {
+            Properties.Settings.Default.TelegramAlerts = chkTelegramEnabled.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void chkDesktopNotifications_CheckedChanged(object? sender, EventArgs? e)
+        {
+            Properties.Settings.Default.DesktopNotications = chkDesktopNotifications.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        private void chkIFTTT_CheckedChanged(object? sender, EventArgs? e)
+        {
+            Properties.Settings.Default.IFTTTAlerts = chkIFTTT.Checked;
             Properties.Settings.Default.Save();
         }
 
@@ -466,16 +521,38 @@ namespace Sim70
 
             chkDiscord.Checked = Properties.Settings.Default.DiscordAlerts;
             chkDiscord_CheckedChanged(null, null);
-
             txtDiscordWebhook.Text = Properties.Settings.Default.DiscordWebhook;
             txtMentionId.Text = Properties.Settings.Default.DiscordMention;
 
+            chkTelegramEnabled.Checked = Properties.Settings.Default.TelegramAlerts;
+            chkTelegramEnabled_CheckedChanged(null, null);
+            txtBotToken.Text = Properties.Settings.Default.BotToken;
+            txtChatId.Text = Properties.Settings.Default.ChatId;
+
+            chkIFTTT.Checked = Properties.Settings.Default.IFTTTAlerts;
+            chkIFTTT_CheckedChanged(null, null);
+            txtIftttEventName.Text = Properties.Settings.Default.IFTTTEvent;
+            txtIftttKey.Text = Properties.Settings.Default.IFTTTKey;
+
+            chkDesktopNotifications.Checked = Properties.Settings.Default.DesktopNotications;
+            chkDesktopNotifications_CheckedChanged(null, null);
+
             cmbHotkey.SelectedItem = Properties.Settings.Default.Hotkey;
             cmbHotkey_SelectedIndexChanged(null, null);
-
-
-
         }
+
+        private void txtChatId_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.ChatId = txtChatId.Text;
+            Properties.Settings.Default.Save();
+        }
+
+        private void txtBotToken_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.BotToken = txtBotToken.Text;
+            Properties.Settings.Default.Save();
+        }
+
         private void chkAutoStopSim_CheckedChanged(object sender, EventArgs e)
         {
             Properties.Settings.Default.AutoStopSim = chkAutoStopSim.Checked;
@@ -494,10 +571,31 @@ namespace Sim70
             Properties.Settings.Default.Save();
         }
 
+        private void txtIftttKey_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.IFTTTKey = txtIftttKey.Text;
+            Properties.Settings.Default.Save();
+        }
+
+        private void txtIftttEventName_TextChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.IFTTTEvent = txtIftttEventName.Text;
+            Properties.Settings.Default.Save();
+        }
+
         private void nudDelay_ValueChanged(object sender, EventArgs e)
         {
+            if (notifiedAboutMs == false && nudDelay.Value >= 2000 && chkAutoDelay.Enabled)
+            {
+                notifiedAboutMs = true;
+                MessageBox.Show(
+                    "Woah! Steady on there... are you sure you understand what you're doing? Please read this first.\n\n" +
+                    @"When using the ""auto"" mode, this setting adds an **additional** wait **after** the ""join"" button is clickable." + "\n" + 
+                    @"Some people prefer to disable auto mode and set a static ms such as 5,000 (every 5 seconds) which is fine, but ensure you **disable auto mode** if that is what you want to do.");
+            }
             Properties.Settings.Default.ClickRate = (int)nudDelay.Value;
             Properties.Settings.Default.Save();
+            
         }
 
         private void chkAutoDelay_CheckedChanged(object sender, EventArgs e)
@@ -511,6 +609,32 @@ namespace Sim70
             rtbLog.SelectAll();
             rtbLog.Copy();
             rtbLog.DeselectAll();
+        }
+
+        private void btnAbout_Click(object sender, EventArgs e)
+        {
+            FormAbout about = new FormAbout();
+            about.Show();
+        }
+
+        private void btnDiscordTest_Click(object sender, EventArgs e)
+        {
+            sendDiscord(true);
+        }
+
+        private void btnbTelegramTest_Click(object sender, EventArgs e)
+        {
+            sendTelegram(true);
+        }
+
+        private void btnDesktopNotificationTest_Click(object sender, EventArgs e)
+        {
+            new ToastContentBuilder().AddText("Test notification from Sim70").Show();
+        }
+
+        private void btnIftttTest_Click(object sender, EventArgs e)
+        {
+            sendIFTTT(true);
         }
     }
 }

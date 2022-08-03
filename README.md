@@ -9,11 +9,21 @@ Inspired by "TurtleSim" but free, open source, and safe.
 
 [DOWNLOAD](https://github.com/lkd70/SIM70/releases/latest)
 
-
-The [.NET Framework](https://dotnet.microsoft.com/en-us/download/dotnet-framework) is required to run the minimal build.
+[GUIDE](https://github.com/lkd70/SIM70/blob/master/README.md)
 
 ## Changelog
 
+### v6.0.0.0
+
+* Fixed statistics calculations
+* Fixed github version checking
+* Added IFTTT integration
+* Added Telegram integration
+* Added desktop notifications
+* Remodeled a little
+* Added "About" page
+* Added high clickrate information message
+* Added notification test routines
 
 ### v5.0.0.1
 

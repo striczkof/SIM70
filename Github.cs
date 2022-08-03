@@ -14,109 +14,109 @@ namespace Sim70
 
     public partial class GithubRelease
     {
-        public Uri? Url { get; set; }
+        public Uri? url { get; set; }
 
-        public Uri? AssetsUrl { get; set; }
+        public Uri? assets_url { get; set; }
 
-        public string? UploadUrl { get; set; }
+        public string? upload_url { get; set; }
 
-        public Uri? HtmlUrl { get; set; }
+        public Uri? html_url { get; set; }
 
-        public long Id { get; set; }
+        public long id { get; set; }
 
-        public Author? Author { get; set; }
+        public Author? author { get; set; }
 
-        public string? NodeId { get; set; }
+        public string? node_id { get; set; }
 
-        public string? TagName { get; set; }
+        public string? tag_name { get; set; }
 
-        public string? TargetCommitish { get; set; }
+        public string? target_commitish { get; set; }
 
-        public string? Name { get; set; }
+        public string? name { get; set; }
 
-        public bool Draft { get; set; }
+        public bool draft { get; set; }
 
-        public bool Prerelease { get; set; }
+        public bool prerelease { get; set; }
 
-        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset created_at { get; set; }
 
-        public DateTimeOffset PublishedAt { get; set; }
+        public DateTimeOffset publishedat { get; set; }
 
-        public Asset[]? Assets { get; set; }
+        public Asset[]? assets { get; set; }
 
-        public Uri? TarballUrl { get; set; }
+        public Uri? tarball_url { get; set; }
 
-        public Uri? ZipballUrl { get; set; }
+        public Uri? zipball_url { get; set; }
 
-        public string? Body { get; set; }
+        public string? body { get; set; }
     }
 
     public partial class Asset
     {
-        public Uri? Url { get; set; }
+        public Uri? url { get; set; }
 
-        public long Id { get; set; }
+        public long id { get; set; }
 
-        public string? NodeId { get; set; }
+        public string? node_id { get; set; }
 
-        public string? Name { get; set; }
+        public string? name { get; set; }
 
-        public object? Label { get; set; }
+        public object? label { get; set; }
 
-        public Author? Uploader { get; set; }
+        public Author? uploader { get; set; }
 
-        public string? ContentType { get; set; }
+        public string? content_type { get; set; }
 
-        public string? State { get; set; }
+        public string? state { get; set; }
 
-        public long Size { get; set; }
+        public long size { get; set; }
 
-        public long DownloadCount { get; set; }
+        public long download_count { get; set; }
 
-        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset created_at { get; set; }
 
-        public DateTimeOffset UpdatedAt { get; set; }
+        public DateTimeOffset updated_at { get; set; }
 
-        public Uri? BrowserDownloadUrl { get; set; }
+        public Uri? browser_download_url { get; set; }
     }
 
     public partial class Author
     {
-        public string? Login { get; set; }
+        public string? login { get; set; }
 
-        public long Id { get; set; }
+        public long id { get; set; }
 
-        public string? NodeId { get; set; }
+        public string? node_id { get; set; }
 
-        public Uri? AvatarUrl { get; set; }
+        public Uri? avatar_url { get; set; }
 
-        public string? GravatarId { get; set; }
+        public string? gravatar_id { get; set; }
 
-        public Uri? Url { get; set; }
+        public Uri? url { get; set; }
 
-        public Uri? HtmlUrl { get; set; }
+        public Uri? html_url { get; set; }
 
-        public Uri? FollowersUrl { get; set; }
+        public Uri? followers_url { get; set; }
 
-        public string? FollowingUrl { get; set; }
+        public string? following_url { get; set; }
 
-        public string? GistsUrl { get; set; }
+        public string? gists_url { get; set; }
 
-        public string? StarredUrl { get; set; }
+        public string? starred_url { get; set; }
 
-        public Uri? SubscriptionsUrl { get; set; }
+        public Uri? subscriptions_url { get; set; }
 
-        public Uri? OrganizationsUrl { get; set; }
+        public Uri? organizations_url { get; set; }
 
-        public Uri? ReposUrl { get; set; }
+        public Uri? repos_url { get; set; }
 
-        public string? EventsUrl { get; set; }
+        public string? events_url { get; set; }
 
-        public Uri? ReceivedEventsUrl { get; set; }
+        public Uri? received_events_url { get; set; }
 
-        public string? Type { get; set; }
+        public string? type{ get; set; }
 
-        public bool SiteAdmin { get; set; }
+        public bool site_admin { get; set; }
     }
 
     class Github

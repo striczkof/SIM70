@@ -9,7 +9,7 @@ Inspired by "TurtleSim" but free, open source, and safe.
 
 [DOWNLOAD](https://github.com/lkd70/SIM70/releases/latest)
 
-[GUIDE](https://github.com/lkd70/SIM70/blob/master/README.md)
+[GUIDE](https://github.com/lkd70/SIM70/blob/master/GUIDE.md)
 
 ## Changelog
 

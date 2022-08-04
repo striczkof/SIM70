@@ -27,7 +27,7 @@ You will need to click **and hold** down in that box and move the cursor (drag) 
 
 Note: Do **not** release the hold on the "Join" text, but the button around the text.
 
-![Gif of the dragging](https://img.lkd70.com/HUGI5/DiwIgOhO90.gif/raw)
+![Gif of the dragging](ShooterGame_BbpKDkpkoO.gif)
 
 3. Click the big "Start" button and Sim70 will start to automatically join the server. You can now open any other application/game over the top of Ark and enjoy simming for a change.
 
